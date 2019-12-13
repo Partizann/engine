@@ -91,8 +91,7 @@ void Rasterizer::NotifyLowMemoryWarning() const {
     FML_DLOG(INFO) << "Rasterizer::PurgeCaches called with no GrContext.";
     return;
   }
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
+  auto context_switch = surface_->MakeRenderContextCurrent();
   if (!context_switch->GetSwitchResult()) {
     return;
   }
@@ -158,15 +157,15 @@ void Rasterizer::Draw(fml::RefPtr<Pipeline<flutter::LayerTree>> pipeline) {
 
 sk_sp<SkImage> Rasterizer::MakeRasterSnapshot(sk_sp<SkPicture> picture,
                                               SkISize picture_size) {
-  TRACE_EVENT0("flutter", __FUNCTION__);
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
-  if (!context_switch->GetSwitchResult()) {
+  TRACE_EVENT0("flutter", __FUNCTION__);;
+  auto context_switch = SurfaceMakeContextCurrent();
+  if (context_switch != nullptr && !context_switch->GetSwitchResult()) {
     return nullptr;
   }
   sk_sp<SkSurface> surface;
   SkImageInfo image_info = SkImageInfo::MakeN32Premul(
       picture_size.width(), picture_size.height(), SkColorSpace::MakeSRGB());
+
   if (surface_ == nullptr || surface_->GetContext() == nullptr) {
     // Raster surface is fine if there is no on screen surface. This might
     // happen in case of software rendering.
@@ -322,8 +321,7 @@ RasterStatus Rasterizer::DrawToSurface(flutter::LayerTree& layer_tree) {
     FireNextFrameCallbackIfPresent();
 
     if (surface_->GetContext()) {
-      std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-          context_switch = surface_->MakeRenderContextCurrent();
+      auto context_switch = surface_->MakeRenderContextCurrent();
       if (!context_switch->GetSwitchResult()) {
         return RasterStatus::kFailed;
       }
@@ -339,8 +337,7 @@ RasterStatus Rasterizer::RasterAndSubmitCompositorFrame(
     SurfaceFrame& frame,
     CompositorContext::ScopedFrame& compositor_frame,
     flutter::LayerTree& layer_tree) {
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
+  auto context_switch = surface_->MakeRenderContextCurrent();
   if (!context_switch->GetSwitchResult()) {
     return RasterStatus::kFailed;
   }
@@ -360,8 +357,7 @@ sk_sp<SkData> Rasterizer::ScreenshotLayerTreeAsPicture(
     flutter::LayerTree* tree,
     flutter::CompositorContext& compositor_context) {
   FML_DCHECK(tree != nullptr);
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
+  auto context_switch = surface_->MakeRenderContextCurrent();
   if (!context_switch->GetSwitchResult()) {
     return nullptr;
   }
@@ -468,8 +464,7 @@ sk_sp<SkData> Rasterizer::ScreenshotLayerTreeAsImage(
 
 sk_sp<SkImage> Rasterizer::MakeImageSnapshot(
     sk_sp<SkSurface> snapshot_surface) {
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
+  auto context_switch = surface_->MakeRenderContextCurrent();
   if (!context_switch->GetSwitchResult()) {
     return nullptr;
   }
@@ -483,8 +478,7 @@ sk_sp<SkImage> Rasterizer::MakeImageSnapshot(
 
 sk_sp<SkImage> Rasterizer::MakeRasterImage(
     sk_sp<SkImage> potentially_gpu_snapshot) {
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
+  auto context_switch = surface_->MakeRenderContextCurrent();
   if (!context_switch->GetSwitchResult()) {
     return nullptr;
   }
@@ -497,14 +491,20 @@ sk_sp<SkImage> Rasterizer::MakeRasterImage(
 }
 
 void Rasterizer::ScreenshotFlushCanvas(SkCanvas& canvas) {
-  std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-      context_switch = surface_->MakeRenderContextCurrent();
+  auto context_switch = surface_->MakeRenderContextCurrent();
   if (!context_switch->GetSwitchResult()) {
     FML_LOG(ERROR)
         << "Screenshot: unable to switch gl context to flutter's context";
     return;
   }
   canvas.flush();
+}
+
+std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch> Rasterizer::SurfaceMakeContextCurrent() {
+  if (surface_ == nullptr) {
+    return nullptr;
+  }
+  return surface_->MakeRenderContextCurrent();
 }
 
 Rasterizer::Screenshot Rasterizer::ScreenshotLastLayerTree(
@@ -580,8 +580,7 @@ void Rasterizer::SetResourceCacheMaxBytes(size_t max_bytes, bool from_user) {
   GrContext* context = surface_->GetContext();
   if (context) {
     int max_resources;
-    std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-        context_switch = surface_->MakeRenderContextCurrent();
+    auto context_switch = surface_->MakeRenderContextCurrent();
     if (!context_switch->GetSwitchResult()) {
       return;
     }
@@ -597,8 +596,7 @@ std::optional<size_t> Rasterizer::GetResourceCacheMaxBytes() const {
   GrContext* context = surface_->GetContext();
   if (context) {
     size_t max_bytes;
-    std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
-        context_switch = surface_->MakeRenderContextCurrent();
+    auto context_switch = surface_->MakeRenderContextCurrent();
     if (!context_switch->GetSwitchResult()) {
       return std::nullopt;
     }
