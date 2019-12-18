@@ -55,11 +55,10 @@ void ResetAnchor(CALayer* layer) {
 
 - (void)clipRect:(const SkRect&)clipSkRect {
   CGRect clipRect = [ChildClippingView getCGRectFromSkRect:clipSkRect];
-  CGPathRef pathRef = CGPathCreateWithRect(clipRect, nil);
-  CAShapeLayer* clip = [[CAShapeLayer alloc] init];
+  fml::CFRef<CGPathRef> pathRef(CGPathCreateWithRect(clipRect, nil));
+  CAShapeLayer* clip = [[[CAShapeLayer alloc] init] autorelease];
   clip.path = pathRef;
   self.layer.mask = clip;
-  CGPathRelease(pathRef);
 }
 
 - (void)clipRRect:(const SkRRect&)clipSkRRect {
@@ -125,7 +124,7 @@ void ResetAnchor(CALayer* layer) {
   // TODO(cyanglaz): iOS does not seem to support hard edge on CAShapeLayer. It clearly stated that
   // the CAShaperLayer will be drawn antialiased. Need to figure out a way to do the hard edge
   // clipping on iOS.
-  CAShapeLayer* clip = [[CAShapeLayer alloc] init];
+  CAShapeLayer* clip = [[[CAShapeLayer alloc] init] autorelease];
   clip.path = pathRef;
   self.layer.mask = clip;
   CGPathRelease(pathRef);
@@ -137,7 +136,7 @@ void ResetAnchor(CALayer* layer) {
     return;
   }
   if (path.isEmpty()) {
-    CAShapeLayer* clip = [[CAShapeLayer alloc] init];
+    CAShapeLayer* clip = [[[CAShapeLayer alloc] init] autorelease];
     clip.path = pathRef;
     self.layer.mask = clip;
     CGPathRelease(pathRef);
@@ -195,7 +194,7 @@ void ResetAnchor(CALayer* layer) {
     verb = iter.next(pts);
   }
 
-  CAShapeLayer* clip = [[CAShapeLayer alloc] init];
+  CAShapeLayer* clip = [[[CAShapeLayer alloc] init] autorelease];
   clip.path = pathRef;
   self.layer.mask = clip;
   CGPathRelease(pathRef);
