@@ -7,7 +7,6 @@
 namespace flutter {
 
 IOSGLContextSwitchManager::IOSGLContextSwitchManager() {
-  resource_context_.reset([[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3]);
   stored_ = fml::scoped_nsobject<NSMutableArray>([[NSMutableArray new] retain]);
   resource_context_.reset([[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3]);
   if (resource_context_ != nullptr) {

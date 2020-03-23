@@ -371,10 +371,13 @@ bool FlutterPlatformViewsController::SubmitFrame(GrContext* gr_context,
                                                  std::shared_ptr<IOSGLContext> gl_context) {
   DisposeViews();
 
+  auto contextSwitch = ConstructRendererContextSwitchIfAvailable();
+  if (!context_switch->GetSwitchResult()) {
+    return false;
+  }
+
   bool did_submit = true;
   for (int64_t view_id : composition_order_) {
-    auto contextSwitch = ConstructRendererContextSwitchIfAvailable();
-
     EnsureOverlayInitialized(view_id, gl_context, gr_context);
     auto frame = overlays_[view_id]->surface->AcquireFrame(frame_size_);
     SkCanvas* canvas = frame->SkiaCanvas();

@@ -302,6 +302,10 @@ bool GPUSurfaceGL::PresentSurface(SkCanvas* canvas) {
 
   std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
       context_switch = delegate_->GLContextMakeCurrent();
+  if (!context_switch->GetSwitchResult()) {
+    return false;
+  }
+
   if (offscreen_surface_ != nullptr) {
     TRACE_EVENT0("flutter", "CopyTextureOnscreen");
     SkPaint paint;
