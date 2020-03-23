@@ -468,7 +468,6 @@ NSString* const FlutterDefaultDartEntrypoint = nil;
     [self maybeSetupPlatformViewChannels];
     _shell->GetIsGpuDisabledSyncSwitch()->SetSwitch(_isGpuDisabled ? true : false);
   }
-
   return _shell != nullptr;
 }
 

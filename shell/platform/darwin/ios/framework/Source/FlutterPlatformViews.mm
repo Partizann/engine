@@ -160,6 +160,11 @@ void FlutterPlatformViewsController::SetFrameSize(SkISize frame_size) {
   frame_size_ = frame_size;
 }
 
+void FlutterPlatformViewsController::SetRendererContextSwitchManager(
+    std::shared_ptr<IOSGLContextSwitchManager> gl_context_guard_manager) {
+  renderer_context_switch_manager_ = gl_context_guard_manager;
+}
+
 void FlutterPlatformViewsController::CancelFrame() {
   composition_order_.clear();
 }
@@ -366,6 +371,11 @@ bool FlutterPlatformViewsController::SubmitFrame(GrContext* gr_context,
                                                  std::shared_ptr<IOSGLContext> gl_context) {
   DisposeViews();
 
+  auto contextSwitch = ConstructRendererContextSwitchIfAvailable();
+  if (!contextSwitch->GetSwitchResult()) {
+    return false;
+  }
+
   bool did_submit = true;
   for (int64_t view_id : composition_order_) {
     EnsureOverlayInitialized(view_id, gl_context, gr_context);
@@ -502,6 +512,14 @@ void FlutterPlatformViewsController::EnsureOverlayInitialized(
   overlays_[overlay_id] = std::make_unique<FlutterPlatformViewLayer>(
       std::move(overlay_view), std::move(ios_surface), std::move(surface));
   overlays_[overlay_id]->gr_context = gr_context;
+}
+
+std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
+FlutterPlatformViewsController::ConstructRendererContextSwitchIfAvailable() {
+  if (renderer_context_switch_manager_ == nullptr) {
+    return nullptr;
+  }
+  return renderer_context_switch_manager_->MakeCurrent();
 }
 
 }  // namespace flutter
